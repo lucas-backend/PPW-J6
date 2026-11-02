@@ -1,72 +1,99 @@
 /**
  * Praktikum 6: Komunikasi Data Asinkron Menggunakan AJAX & Fetch API
  * Sistem Informasi Data Mahasiswa (SIMA) - Waktu Praktikum: 90 Menit
- */
+ */ 
 
-//Deklarasikan endpoint API 
+
+//Deklarasikan endpoint API
+const API_URL = 'api/mahasiswa.php';
+
+// [Mon Nov  2 16:34:16 2026] [::1]:57818 [500]: GET /api/mahasiswa.php ini kenapa? Jawaban: 
 
 // 1. Seleksi Elemen DOM Utama
-const tabelBody = document.getElementById('tabel-body-mahasiswa');
-const inputSearch = document.getElementById('input-search');
-const totalBadge = document.getElementById('total-mahasiswa-badge');
-
+const tabelBody = document.getElementById("tabel-body-mahasiswa");
+const inputSearch = document.getElementById("input-search");
+const totalBadge = document.getElementById("total-mahasiswa-badge");
+const totalInfo = document.getElementById("total-mahasiswa-info");
+const formTambah = document.getElementById("form-tambah-mahasiswa");
+const alertBox = document.getElementById("alert-box");
 
 // Helper: Menampilkan Pesan Notifikasi Dinamis
-function showAlert(message, type = 'success') {
-   
+function showAlert(message, type = "success") {
+  if (!alertBox) return;
+  alertBox.textContent = message;
+  alertBox.className = `alert alert-${type}`;
+  alertBox.style.display = "block";
+  setTimeout(() => {
+    alertBox.style.display = "none";
+  }, 4000);
 }
 
 // 2. Fetch API GET: Mengambil Data Mahasiswa dari Server
-async function loadMahasiswa(keyword = '') {
+async function loadMahasiswa(keyword = "") {
+  // tampilkan indikator loading
+  tabelBody.innerHTML = `
+    <tr>
+        td colspan="8" style="text-align: center; padding: 20px; color: var(--text-muted);">
+            Memuat data dari server...
+        </td>
+    </tr>
+  `;
 
-    // tampilkan indikator loading
-    tabelBody.innerHTML = ``;
+  try {
+    //Percobaan 6-1 Langkah 4 susun url request
+    const url = keyword
+      ? `${API_URL}?search=${encodeURIComponent(keyword)}`
+      : API_URL;
 
-    try {
+    //Percobaan 6-1 Langkah 4 kirim request
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
 
-        //Percobaan 6-1 Langkah 4 susun url request
-        
-        //Percobaan 6-1 Langkah 4 kirim request
-        
-        //Percobaan 6-1 Langkah 4 kirim ekstrak json 
-
-      
-    } catch (error) {
-        tabelBody.innerHTML = `
+    //Percobaan 6-1 Langkah 4 kirim ekstrak json
+    const result = await response.json();
+    if (result.status === "success") {
+      renderTable(result.data, keyword);
+    } else {
+      showAlert(result.message, "danger");
+    }
+  } catch (error) {
+    tabelBody.innerHTML = `
             <tr>
                 <td colspan="8" style="text-align: center; padding: 20px; color: #ef4444;">
                     Gagal memuat data dari REST API: ${error.message}
                 </td>
             </tr>
         `;
-    }
+  }
 }
 
 // 3. Render Baris Tabel Dinamis ke DOM
-function renderTable(mahasiswaList = [], keyword = '') {
-    tabelBody.innerHTML = '';
+function renderTable(mahasiswaList = [], keyword = "") {
+  tabelBody.innerHTML = "";
 
-    if (totalBadge) totalBadge.textContent = mahasiswaList.length;
-    if (totalInfo) {
-        totalInfo.textContent = keyword 
-            ? `Ditemukan ${mahasiswaList.length} mahasiswa untuk "${keyword}"`
-            : `Menampilkan ${mahasiswaList.length} mahasiswa`;
-    }
+  if (totalBadge) totalBadge.textContent = mahasiswaList.length;
+  if (totalInfo) {
+    totalInfo.textContent = keyword
+      ? `Ditemukan ${mahasiswaList.length} mahasiswa untuk "${keyword}"`
+      : `Menampilkan ${mahasiswaList.length} mahasiswa`;
+  }
 
-    if (mahasiswaList.length === 0) {
-        tabelBody.innerHTML = `
+  if (mahasiswaList.length === 0) {
+    tabelBody.innerHTML = `
             <tr>
                 <td colspan="8" style="text-align: center; padding: 20px; color: var(--text-muted);">
                     Tidak ada data mahasiswa yang cocok.
                 </td>
             </tr>
         `;
-        return;
-    }
+    return;
+  }
 
-    mahasiswaList.forEach((mhs, index) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
+  mahasiswaList.forEach((mhs, index) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
             <td>${index + 1}</td>
             <td>
                 <img src="img/avatar-default.svg" alt="Foto ${mhs.nama}" class="avatar-img" width="36" height="36">
@@ -81,19 +108,20 @@ function renderTable(mahasiswaList = [], keyword = '') {
                 <button type="button" class="btn btn-danger btn-sm" onclick="deleteMahasiswa(${mhs.id}, '${mhs.nama}')">Hapus</button>
             </td>
         `;
-        tabelBody.appendChild(tr);
-    });
+    tabelBody.appendChild(tr);
+  });
 }
 
 // Elemen DOM Modal Edit
-const modalEdit = document.getElementById('modal-edit');
-const formEdit = document.getElementById('form-edit-mahasiswa');
-const editId = document.getElementById('edit-id');
-const editnpm = document.getElementById('edit-npm');
-const editNama = document.getElementById('edit-nama');
-const editProdi = document.getElementById('edit-prodi');
-const editAngkatan = document.getElementById('edit-angkatan');
-const editEmail = document.getElementById('edit-email');
+const modalEdit = document.getElementById("modal-edit");
+const formEdit = document.getElementById("form-edit-mahasiswa");
+const editId = document.getElementById("edit-id");
+const editnpm = document.getElementById("edit-npm");
+const editNama = document.getElementById("edit-nama");
+const editProdi = document.getElementById("edit-prodi");
+const editAngkatan = document.getElementById("edit-angkatan");
+const editEmail = document.getElementById("edit-email");
+
 
 async function openEditModal(id) {
     try {
